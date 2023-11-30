@@ -18,20 +18,20 @@ float acc_z_offset;
 float gyro_x_offset;
 float gyro_y_offset;
 float gyro_z_offset;
-#define MAX_DATA_POINTS 10 // Adjust this based on your requirements
+#define MAX_DATA_POINTS 20 // Adjust this based on your requirements
 UART_HandleTypeDef uart;
 
 void IMU_Init()
 {
 	//Checks to see IMU and Microcontroller is connected
 	GPIOB->ODR |= GPIO_ODR_2 | GPIO_ODR_0;
-	HAL_StatusTypeDef result = HAL_I2C_IsDeviceReady(&hi2c2, hi2c2.Init.OwnAddress1,  100, 1000);
+	HAL_StatusTypeDef result = HAL_I2C_IsDeviceReady(&hi2c2, hi2c2.Init.OwnAddress1,  250, HAL_MAX_DELAY);
 	SENSOR_Config();
 	FIFO_Config();
-	GPIOB->ODR &= ~GPIO_ODR_2;
+	ReadAccelerometerAtRest();
+	READ_DATA();
 
-//	ReadAccelerometerAtRest();
-//	READ_DATA();
+	GPIOB->ODR &= ~GPIO_ODR_2;
 }
 
 void SENSOR_Config()
@@ -232,16 +232,24 @@ void READ_DATA()
 	}
 
 	int i;
+	for (i = 0; i < 1000000; i++) {
+
+	}
 	for (i = 0; i < MAX_DATA_POINTS; i++) { // SEND DATA
 		HAL_UART_Transmit(&huart6, &acc_x_data[i], 4, HAL_MAX_DELAY);
 		HAL_UART_Transmit(&huart6, &acc_y_data[i], 4, HAL_MAX_DELAY);
 		HAL_UART_Transmit(&huart6, &acc_z_data[i], 4, HAL_MAX_DELAY);
+	}
+	for (i = 0; i < 1000; i++) {
+
+	}
+	for (i = 0; i < MAX_DATA_POINTS; i++) {
 		HAL_UART_Transmit(&huart6, &gyro_x_data[i], 4, HAL_MAX_DELAY);
 		HAL_UART_Transmit(&huart6, &gyro_y_data[i], 4, HAL_MAX_DELAY);
 		HAL_UART_Transmit(&huart6, &gyro_z_data[i], 4, HAL_MAX_DELAY);
 	}
 
-	GPIOB->ODR &= ~GPIO_ODR_2;
+	//GPIOB->ODR &= ~GPIO_ODR_2;
 }
 
 void ReadAccelerometerAtRest() {
@@ -321,6 +329,4 @@ void ReadAccelerometerAtRest() {
     	gyro_z_raw = (~gyro_z_raw + 1);
     }
     gyro_z_offset = (gyro_z_raw *GYRO_SENS/1000);
-
-    READ_DATA();
 }

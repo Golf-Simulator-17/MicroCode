@@ -19,6 +19,7 @@
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 #include "imu.h"
+
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 
@@ -44,12 +45,6 @@ I2C_HandleTypeDef hi2c2;
 
 UART_HandleTypeDef huart6;
 
-uint8_t Rx_data[10];
-uint8_t Tx_data[10];
-
-uint8_t RX_buffer_i2c [1];
-
-
 /* USER CODE BEGIN PV */
 
 /* USER CODE END PV */
@@ -66,6 +61,7 @@ static void MX_USART6_UART_Init(void);
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
 
+uint8_t Rx_data[10];
 /* USER CODE END 0 */
 
 /**
@@ -96,6 +92,7 @@ int main(void)
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
+  GPIOB->ODR |= GPIO_ODR_2;
   MX_I2C2_Init();
   MX_USART6_UART_Init();
   //IMU_Init();
@@ -110,6 +107,12 @@ int main(void)
   while (1)
   {
     /* USER CODE END WHILE */
+	  __HAL_UART_CLEAR_PEFLAG(&huart6);
+	  __HAL_UART_CLEAR_FEFLAG(&huart6);
+	  __HAL_UART_CLEAR_NEFLAG(&huart6);
+	  __HAL_UART_CLEAR_OREFLAG(&huart6);
+	  __HAL_UART_CLEAR_FLAG(&huart6, UART_CLEAR_CTSF);
+	  HAL_UART_Receive_IT(&huart6, Rx_data, 10);
 
     /* USER CODE BEGIN 3 */
   }
@@ -250,7 +253,10 @@ static void MX_GPIO_Init(void)
   __HAL_RCC_GPIOB_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_0|GPIO_PIN_2, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_0, GPIO_PIN_RESET);
+
+  /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_2, GPIO_PIN_SET);
 
   /*Configure GPIO pins : PB0 PB2 */
   GPIO_InitStruct.Pin = GPIO_PIN_0|GPIO_PIN_2;
@@ -265,17 +271,30 @@ static void MX_GPIO_Init(void)
 
 /* USER CODE BEGIN 4 */
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
-	HAL_StatusTypeDef received;
-	__HAL_UART_CLEAR_PEFLAG(&huart6);
-	__HAL_UART_CLEAR_FEFLAG(&huart6);
-	__HAL_UART_CLEAR_NEFLAG(&huart6);
-	__HAL_UART_CLEAR_OREFLAG(&huart6);
-	received = HAL_UART_Receive_IT(&huart6, Rx_data, 10);
-	if (Rx_data[0] == 'i') {
+//	HAL_StatusTypeDef received;
+//	__HAL_UART_CLEAR_PEFLAG(&huart6);
+//	__HAL_UART_CLEAR_FEFLAG(&huart6);
+//	__HAL_UART_CLEAR_NEFLAG(&huart6);
+//	__HAL_UART_CLEAR_OREFLAG(&huart6);
+//	__HAL_UART_CLEAR_FLAG(&huart6, UART_CLEAR_CTSF);
+//	received = HAL_UART_Receive_IT(&huart6, Rx_data, 10);
+
+	if (Rx_data[5] == 'i') {
+
+		HAL_UART_Transmit(&huart6, "ack1", 4, HAL_MAX_DELAY);
+		for(int i = 0; i < 100000; i++) {
+
+		}
+		HAL_UART_Transmit(&huart6, "ack1", 4, HAL_MAX_DELAY);
+		for(int i = 0; i < 100000; i++) {
+
+		}
 		IMU_Init();
-		//ReadAccelerometerAtRest();
-	} else if (Rx_data[0] == 'c'){
-		ReadAccelerometerAtRest();
+
+	} else if (Rx_data[5] == 'c'){
+//		HAL_UART_Transmit(&huart6, "ack2", 4, HAL_MAX_DELAY);
+
+		//GPIOB->ODR &= ~GPIO_ODR_2;
 	}
 }
 
